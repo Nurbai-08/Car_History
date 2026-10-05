@@ -1,0 +1,339 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+model User {
+  avatarFileId String? @db.Uuid
+  avatar File? @relation("Avatar",fields:[avatarFileId],references:[id])
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
+  passwordHash String
+  firstName String
+  timezone String @default("Asia/Bishkek")
+  currency String @default("KGS")
+  emailVerifiedAt DateTime? @db.Timestamptz
+  emailNotifications Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  sessions Session[]
+  tokens AuthToken[]
+  owners Owner[]
+  events Event[]
+  files File[] @relation("UploadedFiles")
+  notifications Notification[]
+  reports Report[]
+  invitations Invitation[]
+  audit Audit[]
+  centers ServiceCenter[]
+}
+model Session {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId], references:[id])
+  userAgent String
+  createdAt DateTime @default(now()) @db.Timestamptz
+  lastSeenAt DateTime @default(now()) @db.Timestamptz
+  expiresAt DateTime @db.Timestamptz
+  revokedAt DateTime? @db.Timestamptz
+  tokens RefreshToken[]
+  @@index([userId])
+}
+model RefreshToken {
+  id String @id @default(uuid()) @db.Uuid
+  sessionId String @db.Uuid
+  session Session @relation(fields:[sessionId],references:[id])
+  hash String @unique
+  usedAt DateTime? @db.Timestamptz
+  expiresAt DateTime @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+}
+model AuthToken {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId],references:[id])
+  hash String @unique
+  purpose String
+  payload String?
+  expiresAt DateTime @db.Timestamptz
+  usedAt DateTime? @db.Timestamptz
+}
+model Car {
+  id String @id @default(uuid()) @db.Uuid
+  brand String
+  model String
+  year Int
+  generation String?
+  vin String?
+  licensePlate String?
+  engineType String?
+  engineVolume Decimal? @db.Decimal(4,1)
+  horsepower Int?
+  transmission String?
+  drivetrain String?
+  color String?
+  note String?
+  currency String @default("KGS")
+  demo Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+  version Int @default(1)
+  owners Owner[]
+  events Event[]
+  mileage Mileage[]
+  expenses Expense[]
+  files File[]
+  reminders Reminder[]
+  reports Report[]
+  invitations Invitation[]
+  audit Audit[]
+}
+model Owner {
+  id String @id @default(uuid()) @db.Uuid
+  carId String @db.Uuid
+  car Car @relation(fields:[carId],references:[id])
+  userId String @db.Uuid
+  user User @relation(fields:[userId],references:[id])
+  startedAt DateTime @default(now()) @db.Timestamptz
+  endedAt DateTime? @db.Timestamptz
+  purchaseDate DateTime? @db.Date
+  purchasePrice Decimal? @db.Decimal(14,2)
+  currency String
+  @@index([userId,endedAt])
+}
+// Event is the common history root for service records, accidents and documents.
+// Kind-specific payload is strictly validated; money, parts, mileage and file links are relational.
+model Event {
+  relatedEventId String? @db.Uuid
+  relatedEvent Event? @relation("RelatedEvents",fields:[relatedEventId],references:[id])
+  linkedEvents Event[] @relation("RelatedEvents")
+  id String @id @default(uuid()) @db.Uuid
+  carId String @db.Uuid
+  car Car @relation(fields:[carId],references:[id])
+  createdBy String @db.Uuid
+  author User @relation(fields:[createdBy],references:[id])
+  kind String
+  title String
+  description String @default("")
+  date DateTime @db.Date
+  odometerKm Int?
+  laborCost Decimal @default(0) @db.Decimal(14,2)
+  extraCost Decimal @default(0) @db.Decimal(14,2)
+  totalCost Decimal @default(0) @db.Decimal(14,2)
+  currency String
+  data Json @default("{}")
+  transferAllowed Boolean @default(false)
+  serviceCenterId String? @db.Uuid
+  serviceCenter ServiceCenter? @relation(fields:[serviceCenterId],references:[id])
+  idempotencyKey String?
+  requestHash String?
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
+  parts Part[]
+  mileage Mileage?
+  expense Expense?
+  attachments Attachment[]
+  reminders Reminder[]
+  @@unique([carId,idempotencyKey])
+  @@index([carId,date,id])
+}
+model Part {
+  id String @id @default(uuid()) @db.Uuid
+  eventId String @db.Uuid
+  event Event @relation(fields:[eventId],references:[id])
+  name String
+  brand String @default("")
+  article String @default("")
+  quantity Decimal @db.Decimal(10,3)
+  unit String @default("шт")
+  unitPrice Decimal @db.Decimal(14,2)
+  position String?
+  warrantyUntil DateTime? @db.Date
+  warrantyKm Int?
+}
+model Mileage {
+  id String @id @default(uuid()) @db.Uuid
+  carId String @db.Uuid
+  car Car @relation(fields:[carId],references:[id])
+  eventId String? @unique @db.Uuid
+  event Event? @relation(fields:[eventId],references:[id])
+  date DateTime @db.Date
+  odometerKm Int
+  source String
+  changeType String @default("reading")
+  reason String?
+  confirmed Boolean @default(false)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  version Int @default(1)
+  @@index([carId,date,id])
+}
+model Expense {
+  id String @id @default(uuid()) @db.Uuid
+  carId String @db.Uuid
+  car Car @relation(fields:[carId],references:[id])
+  eventId String @unique @db.Uuid
+  event Event @relation(fields:[eventId],references:[id])
+  amount Decimal @db.Decimal(14,2)
+  currency String
+  category String
+  date DateTime @db.Date
+  @@index([carId,date])
+}
+model File {
+  avatars User[] @relation("Avatar")
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation("UploadedFiles",fields:[userId],references:[id])
+  carId String? @db.Uuid
+  car Car? @relation(fields:[carId],references:[id])
+  objectKey String @unique
+  originalName String
+  mime String
+  size Int
+  checksum String
+  status String @default("pending")
+  transferAllowed Boolean @default(false)
+  photoPosition Int?
+  createdAt DateTime @default(now()) @db.Timestamptz
+  attachments Attachment[]
+  reportFiles ReportFile[]
+  @@index([userId])
+}
+model Attachment {
+  id String @id @default(uuid()) @db.Uuid
+  eventId String @db.Uuid
+  event Event @relation(fields:[eventId],references:[id])
+  fileId String @db.Uuid
+  file File @relation(fields:[fileId],references:[id])
+  stage String @default("document")
+  @@unique([eventId,fileId])
+}
+model Reminder {
+  id String @id @default(uuid()) @db.Uuid
+  carId String @db.Uuid
+  car Car @relation(fields:[carId],references:[id])
+  eventId String? @db.Uuid
+  event Event? @relation(fields:[eventId],references:[id])
+  title String
+  description String @default("")
+  targetDate DateTime? @db.Date
+  targetKm Int?
+  baselineDate DateTime? @db.Date
+  repeatKm Int?
+  repeatMonths Int?
+  soonDays Int @default(30)
+  soonKm Int @default(1000)
+  status String @default("active")
+  completedAt DateTime? @db.Timestamptz
+  version Int @default(1)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  notifications Notification[]
+  @@index([status,targetDate])
+}
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId],references:[id])
+  reminderId String? @db.Uuid
+  reminder Reminder? @relation(fields:[reminderId],references:[id])
+  title String
+  body String
+  carId String? @db.Uuid
+  deliveryKey String @unique
+  readAt DateTime? @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+  @@index([userId,createdAt])
+}
+model Report {
+  id String @id @default(uuid()) @db.Uuid
+  carId String @db.Uuid
+  car Car @relation(fields:[carId],references:[id])
+  createdBy String @db.Uuid
+  author User @relation(fields:[createdBy],references:[id])
+  token String @unique
+  title String
+  active Boolean @default(true)
+  expiresAt DateTime? @db.Timestamptz
+  settings Json
+  currentVersion Int @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  versions ReportVersion[]
+}
+model ReportVersion {
+  id String @id @default(uuid()) @db.Uuid
+  reportId String @db.Uuid
+  report Report @relation(fields:[reportId],references:[id])
+  version Int
+  snapshot Json
+  createdAt DateTime @default(now()) @db.Timestamptz
+  items ReportItem[]
+  files ReportFile[]
+  @@unique([reportId,version])
+}
+model ReportItem {
+  id String @id @default(uuid()) @db.Uuid
+  versionId String @db.Uuid
+  reportVersion ReportVersion @relation(fields:[versionId],references:[id])
+  entityId String @db.Uuid
+  sourceVersion Int
+  changed Boolean @default(false)
+  deleted Boolean @default(false)
+  @@index([entityId])
+}
+model ReportFile {
+  id String @id @default(uuid()) @db.Uuid
+  versionId String @db.Uuid
+  reportVersion ReportVersion @relation(fields:[versionId],references:[id])
+  fileId String @db.Uuid
+  file File @relation(fields:[fileId],references:[id])
+  @@unique([versionId,fileId])
+}
+model Invitation {
+  id String @id @default(uuid()) @db.Uuid
+  carId String @db.Uuid
+  car Car @relation(fields:[carId],references:[id])
+  senderId String @db.Uuid
+  sender User @relation(fields:[senderId],references:[id])
+  email String
+  hash String @unique
+  status String @default("pending")
+  expiresAt DateTime @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+}
+model Audit {
+  id String @id @default(uuid()) @db.Uuid
+  actorId String @db.Uuid
+  actor User @relation(fields:[actorId],references:[id])
+  carId String @db.Uuid
+  car Car @relation(fields:[carId],references:[id])
+  entityType String
+  entityId String @db.Uuid
+  action String
+  oldData Json?
+  newData Json?
+  version Int
+  requestId String
+  createdAt DateTime @default(now()) @db.Timestamptz
+  @@index([carId,createdAt])
+}
+model Outbox {
+  id String @id @default(uuid()) @db.Uuid
+  kind String
+  payload Json
+  sentAt DateTime? @db.Timestamptz
+  createdAt DateTime @default(now()) @db.Timestamptz
+}
+model ServiceCenter {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields:[userId],references:[id])
+  name String
+  address String @default("")
+  phone String @default("")
+  note String @default("")
+  events Event[]
+}

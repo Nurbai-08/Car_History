@@ -1,0 +1,42 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import 'tailwindcss';
+@theme {
+  --color-page: #f5f5f3;
+  --color-surface: #ffffff;
+  --color-ink: #171c22;
+  --color-muted: #606770;
+  --color-line: #e4e6e8;
+  --color-accent: #2457f5;
+  --color-danger: #c92a21;
+  --color-success: #16753a;
+  --color-warn: #956018;
+  --font-sans: 'Inter', 'Arial', sans-serif;
+  --radius-control: 8px;
+  --radius-panel: 12px;
+}
+@layer base {
+  body {
+    @apply m-0 bg-page font-sans text-sm text-ink antialiased;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+  }
+  button:not(:disabled),
+  a,
+  select {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  ::selection {
+    @apply bg-accent/15;
+  }
+}

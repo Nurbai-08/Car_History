@@ -1,0 +1,50 @@
+{
+  "name": "@carhistory/api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/main.ts",
+    "worker": "tsx --env-file=../../.env src/worker.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "tsx --env-file=../../.env ../../scripts/prisma.ts migrate deploy",
+    "db:seed": "tsx --env-file=../../.env prisma/seed.ts",
+    "test": "tsx --test test/domain.test.ts",
+    "test:integration": "tsx --env-file=../../.env --test test/integration.test.ts",
+    "storage:init": "tsx --env-file=../../.env src/init-storage.ts",
+    "db:demo-photos": "tsx --env-file=../../.env demo-photos.ts"
+  },
+  "dependencies": {
+    "@carhistory/validation": "workspace:*",
+    "@nestjs/common": "11.1.9",
+    "@nestjs/core": "11.1.9",
+    "@nestjs/platform-express": "11.1.9",
+    "@nestjs/swagger": "11.2.3",
+    "@nestjs/jwt": "11.0.1",
+    "@prisma/client": "6.19.3",
+    "prisma": "6.19.3",
+    "argon2": "0.44.0",
+    "cookie-parser": "1.4.7",
+    "express": "5.1.0",
+    "helmet": "8.1.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "3.24.2",
+    "bullmq": "5.65.1",
+    "ioredis": "5.8.2",
+    "nodemailer": "7.0.11",
+    "@aws-sdk/client-s3": "3.940.0",
+    "@aws-sdk/s3-request-presigner": "3.940.0",
+    "file-type": "20.5.0",
+    "express-rate-limit": "8.2.1",
+    "decimal.js": "10.6.0"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.5",
+    "@types/cookie-parser": "1.4.10",
+    "@types/multer": "2.0.0",
+    "@types/nodemailer": "7.0.4"
+  }
+}

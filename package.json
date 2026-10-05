@@ -1,0 +1,36 @@
+{
+  "name": "carhistory",
+  "private": true,
+  "packageManager": "pnpm@11.13.1",
+  "scripts": {
+    "dev": "pnpm --filter @carhistory/validation build && concurrently -n api,web \"pnpm --filter @carhistory/api dev\" \"pnpm --filter @carhistory/web dev\"",
+    "dev:up": "node scripts/dev-up.mjs",
+    "dev:down": "node scripts/dev-up.mjs down",
+    "worker": "pnpm --filter @carhistory/api worker",
+    "build": "pnpm --filter @carhistory/validation build && pnpm --filter @carhistory/api build && pnpm --filter @carhistory/web build",
+    "typecheck": "pnpm --filter @carhistory/validation build && pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "db:generate": "pnpm --filter @carhistory/api db:generate",
+    "db:migrate": "pnpm --filter @carhistory/api db:migrate",
+    "db:seed": "pnpm --filter @carhistory/api db:seed",
+    "test": "pnpm --filter @carhistory/api test",
+    "test:integration": "pnpm --filter @carhistory/api test:integration",
+    "test:e2e": "playwright test",
+    "storage:init": "pnpm --filter @carhistory/api storage:init",
+    "db:demo-photos": "pnpm --filter @carhistory/api db:demo-photos",
+    "db:backup": "node --env-file=.env scripts/backup.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.57.0",
+    "@types/node": "24.10.1",
+    "@vercel/config": "^0.9.0",
+    "concurrently": "9.2.1",
+    "eslint": "9.39.1",
+    "prettier": "3.7.4",
+    "s3rver": "3.7.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.48.1"
+  }
+}

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+*.log
+*.tsbuildinfo
+.DS_Store
+
+backups/
+.railway/
+.vercel/
+.pnpm-store/
