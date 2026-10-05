@@ -10,12 +10,16 @@ jobs:
         with: {node-version: '24'}
       - run: corepack enable && corepack prepare pnpm@11.13.1 --activate
       - run: pnpm install --frozen-lockfile
+      - name: Install disposable development services
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql postgresql-client redis-server
       - name: Configure disposable development services
         run: |
           cp .env.example .env
           node -e "const fs=require('fs');fs.writeFileSync('.env',fs.readFileSync('.env','utf8').replace('JWT_ACCESS_SECRET=\\n','JWT_ACCESS_SECRET='+require('crypto').randomBytes(48).toString('hex')+'\\n'))"
-          docker compose up -d --build
-          docker compose exec -T postgres createdb -U carhistory carhistory_test
+          pnpm dev:up --no-app
+          createdb -h 127.0.0.1 -p 55432 -U carhistory carhistory_test
       - run: pnpm db:generate && pnpm db:migrate && pnpm db:seed
       - run: pnpm typecheck && pnpm lint && pnpm build && pnpm test && pnpm test:integration
       - run: pnpm exec playwright install --with-deps chromium
@@ -25,6 +29,9 @@ jobs:
           pnpm worker > /tmp/carhistory-worker.log 2>&1 &
           for attempt in $(seq 1 60); do curl -fsS http://localhost:5173 >/dev/null && break; sleep 1; done
           pnpm test:e2e
+      - name: Stop disposable development services
+        if: always()
+        run: pnpm dev:down
       - uses: actions/upload-artifact@v4
         if: always()
         with:

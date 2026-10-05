@@ -58,13 +58,13 @@ Vercel проксирует `/api/*` на Railway. Поэтому refresh-cookie
 
 Создай из того же GitHub-репозитория:
 
-1. `api` — сборка через `docker/api.Dockerfile`, публичный домен, проверка работоспособности: `/api/v1/health/ready`.
-2. `worker` — сборка через `docker/worker.Dockerfile`; публичный домен не нужен.
+1. `api` — установи зависимости, выполни `pnpm --filter @carhistory/validation build` и `pnpm --filter @carhistory/api build`. Перед запуском выполни миграции `pnpm --filter @carhistory/api db:migrate` и инициализацию хранилища `pnpm --filter @carhistory/api storage:init`; затем запусти `node apps/api/dist/main.js`. Для API нужен публичный домен и проверка работоспособности `/api/v1/health/ready`.
+2. `worker` — собери так же, как API, и запусти `node apps/api/dist/worker.js`. Публичный домен не нужен.
 3. PostgreSQL и Redis — шаблоны баз данных Railway.
 4. Storage Bucket — оставь приватным и передай его переменные S3 в `api` и `worker`.
 5. `ClamAV` — контейнер ClamAV в приватной сети Railway с внутренним портом `3310`.
 
-Примени значения из [deploy/production.env.template](deploy/production.env.template) к `api` и `worker`. Значение `FRONTEND_URL` должно в точности совпадать с production-адресом Vercel. Docker-образ API автоматически применит Prisma-миграции и проверит хранилище перед запуском.
+Примени значения из [deploy/production.env.template](deploy/production.env.template) к `api` и `worker`. Значение `FRONTEND_URL` должно в точности совпадать с production-адресом Vercel. Выполни Prisma-миграции и проверку хранилища перед запуском API.
 
 ### Vercel
 

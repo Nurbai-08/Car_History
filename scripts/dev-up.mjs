@@ -74,6 +74,10 @@ const waitFor = async (label, port, host = '127.0.0.1', timeoutMs = 30000) => {
 const binDirs = [
   '/opt/homebrew/opt/postgresql@18/bin',
   '/opt/homebrew/opt/postgresql@16/bin',
+  '/usr/lib/postgresql/18/bin',
+  '/usr/lib/postgresql/17/bin',
+  '/usr/lib/postgresql/16/bin',
+  '/usr/lib/postgresql/15/bin',
   '/usr/local/bin',
   '/usr/bin',
 ];
