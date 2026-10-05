@@ -54,6 +54,12 @@ export async function bootstrap() {
     if (!process.env[name]) throw new Error(`Missing environment: ${name}`);
   if (process.env.JWT_ACCESS_SECRET!.length < 32)
     throw new Error('JWT_ACCESS_SECRET must be at least 32 characters');
+  const frontendOrigins = new Set([process.env.FRONTEND_URL!]);
+  if (process.env.NODE_ENV !== 'production') {
+    const frontend = new URL(process.env.FRONTEND_URL!);
+    if (frontend.hostname === 'localhost') frontendOrigins.add(`http://127.0.0.1:${frontend.port}`);
+    if (frontend.hostname === '127.0.0.1') frontendOrigins.add(`http://localhost:${frontend.port}`);
+  }
   const app = await NestFactory.create(AppModule, { bodyParser: false, logger: ['error', 'warn'] });
   if (process.env.NODE_ENV === 'production') {
     app.getHttpAdapter().getInstance().set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
@@ -67,7 +73,7 @@ export async function bootstrap() {
   app.use(cookieParser());
   app.use(requestContext);
   app.enableCors({
-    origin: process.env.FRONTEND_URL,
+    origin: [...frontendOrigins],
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-CSRF'],
@@ -90,7 +96,7 @@ export async function bootstrap() {
     );
     if (
       !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
-      (req.headers.origin !== process.env.FRONTEND_URL || req.headers['x-csrf'] !== '1')
+      (!frontendOrigins.has(req.headers.origin) || req.headers['x-csrf'] !== '1')
     )
       return res
         .status(403)
