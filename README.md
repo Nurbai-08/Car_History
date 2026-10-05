@@ -1,10 +1,10 @@
 # CarHistory
 
-CarHistory is a full-stack vehicle history and maintenance application. It includes a React/Vite frontend, a NestJS API, PostgreSQL, Redis/BullMQ background jobs, private S3-compatible file storage, email verification, password recovery, reminders, reports, and vehicle ownership transfer.
+CarHistory — полнофункциональное приложение для ведения истории автомобиля и обслуживания. В проекте есть фронтенд на React/Vite, API на NestJS, PostgreSQL, фоновые задачи Redis/BullMQ, приватное S3-совместимое хранилище, подтверждение почты, восстановление пароля, напоминания, отчёты и передача владения автомобилем.
 
-## Local start without Docker
+## Локальный запуск без Docker
 
-Requirements: Node.js 24 with Corepack and [Homebrew](https://brew.sh). Docker Desktop is not required.
+Нужны Node.js 24 с Corepack и [Homebrew](https://brew.sh). Docker Desktop не требуется.
 
 ```bash
 brew install postgresql@18 redis mailpit
@@ -13,26 +13,32 @@ pnpm install --frozen-lockfile
 pnpm dev:up
 ```
 
-On the first run, `pnpm dev:up` creates `.env` with a new JWT secret, starts a private local PostgreSQL cluster, Redis, local S3-compatible storage, Mailpit, the API, the background worker, and the frontend. It also applies migrations and seeds demo data.
+При первом запуске `pnpm dev:up` создаст `.env` с новым JWT-секретом, запустит локальный приватный кластер PostgreSQL, Redis, S3-совместимое хранилище, Mailpit, API, фоновый воркер и фронтенд. Скрипт также применит миграции и добавит демонстрационные данные.
 
-To use a custom configuration, copy `.env.example` to `.env` before starting. The script stores local data and logs in `../work` by default; set `CARHISTORY_WORK_DIR` to use another directory.
+Для своей конфигурации скопируй `.env.example` в `.env` до запуска. По умолчанию данные и журналы хранятся в `../work`; для другой директории задай `CARHISTORY_WORK_DIR`.
 
-Start the project again after it has been stopped:
+Повторный запуск после остановки:
 
 ```bash
 pnpm dev:up
 ```
 
-Open:
+Открой:
 
-- Application: http://localhost:8080
-- API health: http://localhost:3001/api/v1/health/ready
-- Local email inbox: http://localhost:8025
-- Local private S3-compatible storage: http://localhost:9000
+- Приложение: http://localhost:8080
+- Проверка API: http://localhost:3001/api/v1/health/ready
+- Локальный почтовый ящик: http://localhost:8025
+- Локальное приватное S3-совместимое хранилище: http://localhost:9000
 
-Demo account after seeding: `owner@carhistory.test` / `CarHistory2026!`.
+Демонстрационная учётная запись: `owner@carhistory.test` / `CarHistory2026!`.
 
-Stop the application with `pnpm dev:down`. Local data remains in the work directory. To run API tests, lint, type checking, and a production build:
+Остановить приложение:
+
+```bash
+pnpm dev:down
+```
+
+Локальные данные сохраняются в рабочей директории. Для запуска тестов, линтера, проверки типов и production-сборки:
 
 ```bash
 pnpm test
@@ -42,43 +48,43 @@ pnpm typecheck
 pnpm build
 ```
 
-## Production architecture
+## Архитектура для production
 
-The frontend is deployed to Vercel. The API and the always-on BullMQ worker are separate Railway services. Railway also provides PostgreSQL, Redis, an S3-compatible Storage Bucket, and a private ClamAV service. A real SMTP provider is required for verification and password-reset messages.
+Фронтенд разворачивается на Vercel. API и постоянно работающий воркер BullMQ размещаются отдельными сервисами Railway. В Railway также нужны PostgreSQL, Redis, S3-совместимое Storage Bucket и приватный сервис ClamAV. Для писем подтверждения и восстановления пароля необходим реальный SMTP-провайдер.
 
-Vercel proxies `/api/*` to Railway. This keeps refresh cookies on the frontend origin and avoids third-party-cookie failures. Set `BACKEND_URL` in Vercel to the public Railway API origin, without `/api` and without a trailing slash.
+Vercel проксирует `/api/*` на Railway. Поэтому refresh-cookie остаются на домене фронтенда и не блокируются браузером как сторонние. В Vercel укажи `BACKEND_URL`: публичный адрес Railway API без `/api` и без слеша в конце.
 
-### Railway services
+### Сервисы Railway
 
-Create these services from the same GitHub repository:
+Создай из того же GitHub-репозитория:
 
-1. `api` — build with `docker/api.Dockerfile`, expose a public domain, and use `/api/v1/health/ready` as the health check.
-2. `worker` — build with `docker/worker.Dockerfile`; it does not need a public domain.
-3. PostgreSQL and Redis — use Railway database templates.
-4. Storage Bucket — keep it private and copy its S3 reference variables to the API and worker.
-5. `ClamAV` — run a ClamAV container on the private Railway network and expose port `3310` internally.
+1. `api` — сборка через `docker/api.Dockerfile`, публичный домен, проверка работоспособности: `/api/v1/health/ready`.
+2. `worker` — сборка через `docker/worker.Dockerfile`; публичный домен не нужен.
+3. PostgreSQL и Redis — шаблоны баз данных Railway.
+4. Storage Bucket — оставь приватным и передай его переменные S3 в `api` и `worker`.
+5. `ClamAV` — контейнер ClamAV в приватной сети Railway с внутренним портом `3310`.
 
-Apply the values in [deploy/production.env.template](deploy/production.env.template) to both `api` and `worker`. `FRONTEND_URL` must exactly match the production Vercel origin. The API Docker image applies Prisma migrations and verifies the storage bucket before serving traffic.
+Примени значения из [deploy/production.env.template](deploy/production.env.template) к `api` и `worker`. Значение `FRONTEND_URL` должно в точности совпадать с production-адресом Vercel. Docker-образ API автоматически применит Prisma-миграции и проверит хранилище перед запуском.
 
 ### Vercel
 
-Import the same GitHub repository. The root [vercel.ts](vercel.ts) builds only the web application and configures SPA routes plus the API reverse proxy. Set:
+Импортируй этот же GitHub-репозиторий. Корневой [vercel.ts](vercel.ts) собирает только веб-приложение, настраивает маршруты SPA и обратный прокси к API. Укажи:
 
 ```text
 BACKEND_URL=https://your-api.up.railway.app
 ```
 
-After the first Vercel deployment, copy its production origin into Railway as `FRONTEND_URL`, redeploy `api` and `worker`, and then redeploy Vercel. Do not add a trailing slash.
+После первого развёртывания Vercel скопируй его production-адрес в Railway как `FRONTEND_URL`, перезапусти `api` и `worker`, затем сделай повторное развёртывание Vercel. Не добавляй слеш в конце адреса.
 
-## Required production secrets
+## Обязательные production-секреты
 
-Never commit `.env`. Production needs:
+Никогда не отправляй `.env` в Git. Для production нужны:
 
-- `DATABASE_URL`, `REDIS_URL`: Railway references.
-- `JWT_ACCESS_SECRET`: a new random secret with at least 32 characters.
-- `FRONTEND_URL`: exact Vercel production origin.
-- `STORAGE_*`: private S3-compatible bucket credentials and endpoints.
-- `SMTP_*`, `MAIL_FROM`: SMTP account with a verified sender.
-- `CLAMAV_HOST`, `CLAMAV_PORT`: private antivirus service.
+- `DATABASE_URL`, `REDIS_URL` — ссылки на сервисы Railway.
+- `JWT_ACCESS_SECRET` — новый случайный секрет длиной минимум 32 символа.
+- `FRONTEND_URL` — точный production-адрес Vercel.
+- `STORAGE_*` — учётные данные и адреса приватного S3-совместимого хранилища.
+- `SMTP_*`, `MAIL_FROM` — SMTP-учётная запись с подтверждённым адресом отправителя.
+- `CLAMAV_HOST`, `CLAMAV_PORT` — приватный сервис антивирусной проверки.
 
-The complete list and safe placeholders are in [deploy/production.env.template](deploy/production.env.template).
+Полный список и безопасные шаблоны находятся в [deploy/production.env.template](deploy/production.env.template).
