@@ -2,20 +2,24 @@
 
 CarHistory is a full-stack vehicle history and maintenance application. It includes a React/Vite frontend, a NestJS API, PostgreSQL, Redis/BullMQ background jobs, private S3-compatible file storage, email verification, password recovery, reminders, reports, and vehicle ownership transfer.
 
-## Local start with Docker
+## Local start without Docker
 
-Requirements: Docker Desktop and Node.js 24 with Corepack.
-
-```bash
-cp .env.example .env
-node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-```
-
-Put the generated value into `JWT_ACCESS_SECRET` in `.env`, then run:
+Requirements: Node.js 24 with Corepack and [Homebrew](https://brew.sh). Docker Desktop is not required.
 
 ```bash
+brew install postgresql@18 redis mailpit
 corepack enable
 pnpm install --frozen-lockfile
+pnpm dev:up
+```
+
+On the first run, `pnpm dev:up` creates `.env` with a new JWT secret, starts a private local PostgreSQL cluster, Redis, local S3-compatible storage, Mailpit, the API, the background worker, and the frontend. It also applies migrations and seeds demo data.
+
+To use a custom configuration, copy `.env.example` to `.env` before starting. The script stores local data and logs in `../work` by default; set `CARHISTORY_WORK_DIR` to use another directory.
+
+Start the project again after it has been stopped:
+
+```bash
 pnpm dev:up
 ```
 
@@ -24,11 +28,11 @@ Open:
 - Application: http://localhost:8080
 - API health: http://localhost:3001/api/v1/health/ready
 - Local email inbox: http://localhost:8025
-- MinIO console: http://localhost:9001
+- Local private S3-compatible storage: http://localhost:9000
 
 Demo account after seeding: `owner@carhistory.test` / `CarHistory2026!`.
 
-Stop the application with `pnpm dev:down`. Data remains in Docker volumes. To run API tests, lint, type checking, and a production build:
+Stop the application with `pnpm dev:down`. Local data remains in the work directory. To run API tests, lint, type checking, and a production build:
 
 ```bash
 pnpm test
