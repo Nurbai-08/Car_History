@@ -76,6 +76,7 @@ export function CarPage() {
   });
   const [kind, setKind] = useState<string | null>(null),
     [photo, setPhoto] = useState(false),
+    [replacingPhoto, setReplacingPhoto] = useState(false),
     [editingCar, setEditingCar] = useState(false),
     [reminder, setReminder] = useState(false);
   const toast = useToast();
@@ -193,6 +194,10 @@ export function CarPage() {
                 <Button size="sm" variant="ghost" onClick={() => setPhoto(true)}>
                   <Upload size={14} />
                   Фото
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => setReplacingPhoto(true)}>
+                  <Upload size={14} />
+                  {c.photos?.length ? 'Заменить фото' : 'Добавить фото'}
                 </Button>
               </div>
             </Panel>
@@ -324,6 +329,38 @@ export function CarPage() {
               </div>
             ))}
             <FileUploader photo carId={c.id} files={[]} onChange={() => queryClient.invalidateQueries()} />
+          </div>
+        </Drawer>
+      )}
+      {replacingPhoto && (
+        <Drawer
+          open
+          onOpenChange={() => setReplacingPhoto(false)}
+          title={c.photos?.length ? 'Заменить основное фото' : 'Добавить фото автомобиля'}
+        >
+          <div className="space-y-5 p-6">
+            <p className="text-xs leading-5 text-muted">
+              Новое изображение станет основным. Предыдущее основное фото удалится только после успешной
+              загрузки нового.
+            </p>
+            <FileUploader
+              photo
+              carId={c.id}
+              files={[]}
+              onChange={async ([newPhoto]) => {
+                if (!newPhoto) return;
+                try {
+                  await api.patch(`/files/${newPhoto.id}`, { photoPosition: 0 });
+                  const previousPhoto = c.photos?.[0];
+                  if (previousPhoto) await api.delete(`/files/${previousPhoto.id}`);
+                  queryClient.invalidateQueries();
+                  setReplacingPhoto(false);
+                  toast.toast('Фото автомобиля заменено');
+                } catch (e) {
+                  toast.toast(errorMessage(e));
+                }
+              }}
+            />
           </div>
         </Drawer>
       )}
