@@ -154,11 +154,6 @@ export function Dashboard({ garage = false }: { garage?: boolean }) {
                   <Panel key={c.id} className="overflow-hidden">
                     <Link to={`/cars/${c.id}`} onClick={() => selectCar(c.id)} className="relative block">
                       <CarPhoto id={c.photos?.[0]?.id} name={`${c.brand} ${c.model}`} />
-                      <div className="absolute left-4 top-4">
-                        <Badge tone={c.demo ? 'neutral' : 'green'}>
-                          {c.demo ? 'Демонстрация' : 'В гараже'}
-                        </Badge>
-                      </div>
                       <div className="absolute bottom-3 right-3 flex size-8 items-center justify-center rounded-full bg-white">
                         <ArrowUpRight size={16} />
                       </div>
