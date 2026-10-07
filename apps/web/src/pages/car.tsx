@@ -112,7 +112,6 @@ export function CarPage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-5">
         <div>
           <div className="mb-3 flex items-center gap-2">
-            {c.demo && <Badge>Демонстрация</Badge>}
             <Badge tone={c.archived ? 'neutral' : 'green'}>
               {c.archived ? 'В архиве' : 'В вашем гараже'}
             </Badge>
