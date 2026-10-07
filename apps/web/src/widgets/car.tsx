@@ -18,7 +18,7 @@ export function CarPhoto({ id, name, className }: { id?: string; name: string; c
           src={query.data.url}
           alt={name}
           className="size-full object-cover"
-          style={{ objectPosition: 'center 62%' }}
+          style={{ objectPosition: 'center 80%' }}
         />
       ) : (
         <div className="flex flex-col items-center gap-3 text-muted/60">
