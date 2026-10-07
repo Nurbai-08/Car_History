@@ -246,6 +246,7 @@ if (args.includes('--no-seed')) {
   if (users === 0) pnpm(['db:seed']);
   else console.log(`already seeded (${users} users)`);
 }
+if (!args.includes('--no-demo-photos')) pnpm(['db:demo-photos']);
 
 if (args.includes('--no-app')) {
   console.log('\nInfrastructure ready. Start the app with: pnpm dev');
